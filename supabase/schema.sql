@@ -51,7 +51,7 @@ CREATE POLICY "Allow anonymous read access" ON parking_chunks
 -- Create a function to get latest traffic data
 CREATE OR REPLACE FUNCTION get_latest_traffic_data()
 RETURNS TABLE (
-  timestamp TIMESTAMPTZ,
+  data_timestamp TIMESTAMPTZ,
   traffic_volume INTEGER,
   congestion_rate DECIMAL,
   parking_utilization DECIMAL,
@@ -60,7 +60,7 @@ RETURNS TABLE (
 BEGIN
   RETURN QUERY
   SELECT 
-    t.timestamp,
+    t.timestamp AS data_timestamp,
     t.traffic_volume,
     t.congestion_rate,
     t.parking_utilization,
@@ -74,7 +74,7 @@ $$ LANGUAGE plpgsql;
 -- Create a function to get traffic trends for the last 24 hours
 CREATE OR REPLACE FUNCTION get_traffic_trends(hours INTEGER DEFAULT 24)
 RETURNS TABLE (
-  timestamp TIMESTAMPTZ,
+  data_timestamp TIMESTAMPTZ,
   traffic_volume INTEGER,
   congestion_rate DECIMAL,
   parking_utilization DECIMAL,
@@ -83,7 +83,7 @@ RETURNS TABLE (
 BEGIN
   RETURN QUERY
   SELECT 
-    t.timestamp,
+    t.timestamp AS data_timestamp,
     t.traffic_volume,
     t.congestion_rate,
     t.parking_utilization,
