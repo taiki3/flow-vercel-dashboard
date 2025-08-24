@@ -47,14 +47,38 @@ async function importAnalyticsCounts(db: Database, targetDate: string = '2025-07
       
       // Supabaseに挿入（バッチ処理）
       if (result.length > 0) {
-        const { error } = await supabase
-          .from('analytics_counts')
-          .insert(result);
+        // BigIntをNumberに変換
+        const processedResult = result.map((row: any) => ({
+          timestamp: row.timestamp,
+          analytic_id: row.analytic_id,
+          label: Number(row.label),
+          count: Number(row.count)
+        }));
         
-        if (error) {
-          console.error(`    エラー: ${error.message}`);
-        } else {
-          console.log(`    ✓ ${result.length}件のレコードをインポート`);
+        // バッチサイズを小さくして処理（100件ずつ）
+        const batchSize = 100;
+        let successCount = 0;
+        
+        for (let i = 0; i < processedResult.length; i += batchSize) {
+          const batch = processedResult.slice(i, Math.min(i + batchSize, processedResult.length));
+          
+          try {
+            const { error } = await supabase
+              .from('analytics_counts')
+              .insert(batch);
+            
+            if (error) {
+              console.error(`    バッチエラー: ${error.message}`);
+            } else {
+              successCount += batch.length;
+            }
+          } catch (err) {
+            console.error(`    ネットワークエラー: ${err}`);
+          }
+        }
+        
+        if (successCount > 0) {
+          console.log(`    ✓ ${successCount}/${processedResult.length}件のレコードをインポート`);
         }
       }
     }
@@ -89,9 +113,19 @@ async function importAnalyticsSpeeds(db: Database, targetDate: string = '2025-07
       const result = await db.all(query);
       
       if (result.length > 0) {
+        // BigIntをNumberに変換
+        const processedResult = result.map((row: any) => ({
+          timestamp: row.timestamp,
+          analytic_id: row.analytic_id,
+          label: Number(row.label),
+          max_speed: Number(row.max_speed),
+          mean_speed: Number(row.mean_speed),
+          v85_speed: Number(row.v85_speed)
+        }));
+        
         const { error } = await supabase
           .from('analytics_speeds')
-          .insert(result);
+          .insert(processedResult);
         
         if (error) {
           console.error(`    エラー: ${error.message}`);
@@ -135,9 +169,22 @@ async function importParkingSpaces(db: Database, targetDate: string = '2025-07-2
       const result = await db.all(query);
       
       if (result.length > 0) {
+        // BigIntをNumberに変換
+        const processedResult = result.map((row: any) => ({
+          timestamp: row.timestamp,
+          zone_id: row.zone_id,
+          occupied: row.occupied,
+          parked_label: row.parked_label ? Number(row.parked_label) : null,
+          is_real_occupied_transition: row.is_real_occupied_transition,
+          last_occupied_state_transition_time: row.last_occupied_state_transition_time,
+          occupied_state_duration: row.occupied_state_duration ? Number(row.occupied_state_duration) : null,
+          last_24h_cumulative_occupied_duration: row.last_24h_cumulative_occupied_duration ? Number(row.last_24h_cumulative_occupied_duration) : null,
+          last_24h_max_occupied_duration: row.last_24h_max_occupied_duration ? Number(row.last_24h_max_occupied_duration) : null
+        }));
+        
         const { error } = await supabase
           .from('parking_spaces')
-          .insert(result);
+          .insert(processedResult);
         
         if (error) {
           console.error(`    エラー: ${error.message}`);
@@ -179,11 +226,16 @@ async function importParkingGroups(db: Database, targetDate: string = '2025-07-2
       const result = await db.all(query);
       
       if (result.length > 0) {
-        // occupied_zone_idsを文字列配列に変換
+        // BigIntをNumberに変換、occupied_zone_idsを処理
         const processedResult = result.map((row: any) => ({
-          ...row,
+          timestamp: row.timestamp,
+          group_zone_id: row.group_zone_id,
           occupied_zone_ids: row.occupied_zone_ids || [],
-          available_zone_ids: []
+          available_zone_ids: [],
+          occupied_zones: Number(row.occupied_zones),
+          available_zones: Number(row.available_zones),
+          last_24h_cumulative_occupied_duration: row.last_24h_cumulative_occupied_duration ? Number(row.last_24h_cumulative_occupied_duration) : null,
+          last_24h_max_occupied_duration: row.last_24h_max_occupied_duration ? Number(row.last_24h_max_occupied_duration) : null
         }));
         
         const { error } = await supabase
