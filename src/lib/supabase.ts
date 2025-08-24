@@ -3,6 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+// Debug: Log if environment variables are not set
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('⚠️ Supabase環境変数が設定されていません。.envファイルを確認してください。');
+  console.warn('必要な環境変数: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY');
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Database types

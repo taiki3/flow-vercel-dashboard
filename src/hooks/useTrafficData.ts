@@ -47,11 +47,24 @@ export function useTrafficData() {
         .select('*')
         .order('timestamp', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to handle empty table
 
-      if (error) throw error;
-      setTrafficData(data);
+      if (error && error.code !== 'PGRST116') throw error; // Ignore "no rows" error
+      
+      // If no data, use default values
+      if (!data) {
+        setTrafficData({
+          timestamp: new Date().toISOString(),
+          traffic_volume: 0,
+          congestion_rate: 0,
+          parking_utilization: 0,
+          illegal_parking_count: 0
+        });
+      } else {
+        setTrafficData(data);
+      }
     } catch (err) {
+      console.error('Error fetching latest data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch traffic data');
     } finally {
       setLoading(false);
@@ -66,10 +79,12 @@ export function useTrafficData() {
         .gte('timestamp', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .order('timestamp', { ascending: true });
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') throw error; // Ignore "no rows" error
       setTrends(data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch trends');
+      console.error('Error fetching trends:', err);
+      // Don't set error for trends, just use empty array
+      setTrends([]);
     }
   };
 
@@ -129,11 +144,22 @@ export function useParkingData() {
         .select('*')
         .order('chunk_timestamp', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle(); // Use maybeSingle to handle empty table
 
-      if (error) throw error;
-      setCurrentChunk(data);
+      if (error && error.code !== 'PGRST116') throw error; // Ignore "no rows" error
+      
+      // If no data, create sample data
+      if (!data) {
+        const sampleChunk = {
+          chunk_timestamp: new Date().toISOString(),
+          parking_data: []
+        };
+        setCurrentChunk(sampleChunk);
+      } else {
+        setCurrentChunk(data);
+      }
     } catch (err) {
+      console.error('Error fetching parking data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch parking data');
     } finally {
       setLoading(false);
