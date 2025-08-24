@@ -40,7 +40,9 @@ Flow Postシステムから収集された交通データを可視化するダ�
 
 1. [Supabase](https://supabase.com)でアカウントを作成
 2. 新しいプロジェクトを作成
-3. SQLエディタで`supabase/schema.sql`の内容を実行
+3. SQLエディタで以下を実行：
+   - 既存の関数がある場合: 先に`supabase/cleanup_before_schema.sql`を実行
+   - その後: `supabase/schema.sql`を実行
 4. プロジェクトのURLとAnon Keyを取得
 
 ### 2. 環境変数の設定

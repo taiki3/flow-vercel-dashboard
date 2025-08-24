@@ -124,6 +124,10 @@ CREATE POLICY "Allow anonymous read access" ON parking_groups
 CREATE POLICY "Allow anonymous read access" ON parking_spaces
   FOR SELECT USING (true);
 
+-- Drop existing views if they exist (for re-running this script)
+DROP VIEW IF EXISTS current_traffic_summary CASCADE;
+DROP VIEW IF EXISTS current_parking_summary CASCADE;
+
 -- Create views for dashboard
 CREATE OR REPLACE VIEW current_traffic_summary AS
 SELECT 
@@ -146,6 +150,9 @@ SELECT
 FROM parking_spaces
 WHERE timestamp = (SELECT MAX(timestamp) FROM parking_spaces)
 GROUP BY timestamp;
+
+-- Drop existing function if it exists (for re-running this script)
+DROP FUNCTION IF EXISTS get_traffic_trends(INTEGER);
 
 -- Function to get traffic trends
 CREATE OR REPLACE FUNCTION get_traffic_trends(hours INTEGER DEFAULT 24)
