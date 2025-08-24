@@ -1,4 +1,7 @@
--- Drop existing tables if needed for clean setup
+-- NOTE: 既存のテーブル (traffic_data, parking_data, parking_chunks) はそのまま残します
+-- 新しいテーブルは別名で作成するため、既存のデータには影響しません
+
+-- Drop new tables if they exist (for re-running this script)
 DROP TABLE IF EXISTS analytics_counts CASCADE;
 DROP TABLE IF EXISTS analytics_speeds CASCADE;
 DROP TABLE IF EXISTS analytics_mobility CASCADE;

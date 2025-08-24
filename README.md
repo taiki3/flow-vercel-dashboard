@@ -92,12 +92,20 @@ Supabaseダッシュボードで以下を確認：
 
 Flow Postの実際のダミーデータをインポートする場合：
 
-1. 新しいスキーマを適用：
-```bash
-# Supabase SQLエディタで supabase/schema_v2.sql を実行
+1. 既存のテーブルを確認（オプション）：
+```sql
+-- Supabase SQLエディタで実行して既存データを確認
+-- supabase/check_existing_tables.sql の内容を実行
 ```
 
-2. データをインポート：
+2. 新しいスキーマを適用：
+```sql
+-- Supabase SQLエディタで supabase/schema_v2.sql を実行
+-- 注意: このスクリプトは既存のテーブル（traffic_data, parking_data, parking_chunks）には
+-- 影響しません。新しいテーブルのみを作成します。
+```
+
+3. データをインポート：
 ```bash
 npm run import-data
 ```
