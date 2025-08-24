@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from "recharts";
-import { useTrafficData } from "../hooks/useTrafficData";
+import { useTrafficTrends } from "../hooks/useFlowPostData";
 import { Skeleton } from "./ui/skeleton";
 
 export function TrafficTrends() {
-  const { trends, loading, error } = useTrafficData();
+  const { trends, loading, error } = useTrafficTrends();
 
   // Format data for charts
   const chartData = trends.map(item => ({
