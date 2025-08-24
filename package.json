@@ -34,6 +34,7 @@
             "class-variance-authority": "^0.7.1",
             "clsx": "*",
             "cmdk": "^1.1.1",
+            "duckdb-async": "^1.3.2",
             "embla-carousel-react": "^8.6.0",
             "input-otp": "^1.4.2",
             "leaflet": "^1.9.4",
@@ -51,12 +52,15 @@
             "vaul": "^1.1.2"
       },
       "devDependencies": {
-            "@types/node": "^20.10.0",
+            "@types/node": "^20.19.11",
             "@vitejs/plugin-react-swc": "^3.10.2",
+            "dotenv": "^17.2.1",
+            "tsx": "^4.20.5",
             "vite": "^5.4.19"
       },
       "scripts": {
             "dev": "vite",
-            "build": "vite build"
+            "build": "vite build",
+            "import-data": "tsx scripts/import-data.ts"
       }
 }

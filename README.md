@@ -88,7 +88,29 @@ Supabaseダッシュボードで以下を確認：
 
 ## データの投入
 
-初回起動時にサンプルデータを生成する場合は、ブラウザのコンソールで以下を実行：
+### 実データのインポート（Flow Postデータ）
+
+Flow Postの実際のダミーデータをインポートする場合：
+
+1. 新しいスキーマを適用：
+```bash
+# Supabase SQLエディタで supabase/schema_v2.sql を実行
+```
+
+2. データをインポート：
+```bash
+npm run import-data
+```
+
+このスクリプトは以下のデータをインポートします：
+- Analytics Counts（交通量カウント）
+- Analytics Speeds（速度統計）
+- Parking Spaces（個別駐車スペース）
+- Parking Groups（駐車場グループ）
+
+### サンプルデータの生成（旧版）
+
+旧バージョンのサンプルデータを生成する場合は、ブラウザのコンソールで以下を実行：
 
 ```javascript
 // src/utils/generateSampleData.ts の関数を使用
@@ -106,12 +128,17 @@ src/
 ├── hooks/           # カスタムフック
 │   └── useTrafficData.ts      # データ取得フック
 ├── lib/             # ライブラリ設定
-│   └── supabase.ts            # Supabaseクライアント
+│   ├── supabase.ts            # Supabaseクライアント（旧版）
+│   └── supabase-v2.ts         # Supabaseクライアント（Flow Post対応）
 └── utils/           # ユーティリティ
     └── generateSampleData.ts  # サンプルデータ生成
 
+scripts/
+└── import-data.ts   # Flow Postデータインポートスクリプト
+
 supabase/
-└── schema.sql      # データベーススキーマ
+├── schema.sql       # データベーススキーマ（旧版）
+└── schema_v2.sql    # データベーススキーマ（Flow Post対応）
 ```
 
 ## ライセンス
