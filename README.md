@@ -1,31 +1,37 @@
-# 交通監視ダッシュボード
+# Flow Post 交通監視ダッシュボード
 
-リアルタイムで交通データを監視・可視化するダッシュボードアプリケーション
+リアルタイムで交通データを監視・可視化するFlow Post対応ダッシュボードアプリケーション
+
+## 概要
+
+Flow Postシステムから収集された交通データを可視化するダッシュボードです。車両、歩行者、自転車の検出データと駐車場の利用状況をリアルタイムで表示します。
 
 ## 機能
 
 - 📊 **リアルタイムデータ表示**
-  - 交通量
-  - 混雑率（％）
+  - 車両カウント
+  - 歩行者カウント
+  - 自転車カウント
+  - その他オブジェクトカウント
   - 駐車場利用率
-  - 違法駐車台数
-
-- 🗺️ **駐車状況マップビュー**
-  - 衛星写真上に車両をボックス表示
-  - 15分単位のデータを5倍速でループ再生
-  - 車両サイズ別の色分け表示
 
 - 📈 **トレンドグラフ**
   - 24時間の推移グラフ
-  - 統計サマリー表示
+  - オブジェクトタイプ別の統計
+  - 時系列分析
+
+- 🅿️ **駐車場管理**
+  - 個別駐車スペースの状態
+  - 駐車場グループの占有率
+  - 利用時間統計
 
 ## 技術スタック
 
 - **フロントエンド**: React + TypeScript + Vite
 - **スタイリング**: Tailwind CSS + Shadcn/ui
 - **データベース**: Supabase (PostgreSQL)
-- **地図表示**: Leaflet + React Leaflet
 - **グラフ**: Recharts
+- **データ処理**: DuckDB (Parquetファイル処理)
 - **デプロイ**: Vercel
 
 ## セットアップ手順
@@ -35,7 +41,7 @@
 1. [Supabase](https://supabase.com)でアカウントを作成
 2. 新しいプロジェクトを作成
 3. SQLエディタで`supabase/schema.sql`の内容を実行
-4. プロジェクトのURL とAnon Keyを取得
+4. プロジェクトのURLとAnon Keyを取得
 
 ### 2. 環境変数の設定
 
@@ -57,6 +63,22 @@ npm install
 ```bash
 npm run dev
 ```
+
+## データのインポート
+
+Flow Postのダミーデータをインポートする場合：
+
+```bash
+# データインポートスクリプトの実行
+npm run import-data
+```
+
+このスクリプトは以下のデータをインポートします：
+- Analytics Counts（交通量カウント）
+- Analytics Speeds（速度統計）
+- Analytics Mobility（移動性指標）
+- Parking Spaces（個別駐車スペース）
+- Parking Groups（駐車場グループ）
 
 ## Vercelへのデプロイ
 
@@ -80,73 +102,41 @@ git push -u origin main
    - `VITE_SUPABASE_ANON_KEY`
 5. "Deploy"をクリック
 
-### 3. デプロイ後の設定
+## データ構造
 
-Supabaseダッシュボードで以下を確認：
-- Row Level Security (RLS)が有効になっていること
-- 必要に応じてCORSの設定を調整
+### オブジェクトラベル
+- 1: CAR（車両）
+- 2: PEDESTRIAN（歩行者）
+- 3: CYCLIST（自転車）
+- 4: MISC（その他）
 
-## データの投入
-
-### 実データのインポート（Flow Postデータ）
-
-Flow Postの実際のダミーデータをインポートする場合：
-
-1. 既存のテーブルを確認（オプション）：
-```sql
--- Supabase SQLエディタで実行して既存データを確認
--- supabase/check_existing_tables.sql の内容を実行
-```
-
-2. 新しいスキーマを適用：
-```sql
--- Supabase SQLエディタで supabase/schema_v2.sql を実行
--- 注意: このスクリプトは既存のテーブル（traffic_data, parking_data, parking_chunks）には
--- 影響しません。新しいテーブルのみを作成します。
-```
-
-3. データをインポート：
-```bash
-npm run import-data
-```
-
-このスクリプトは以下のデータをインポートします：
-- Analytics Counts（交通量カウント）
-- Analytics Speeds（速度統計）
-- Parking Spaces（個別駐車スペース）
-- Parking Groups（駐車場グループ）
-
-### サンプルデータの生成（旧版）
-
-旧バージョンのサンプルデータを生成する場合は、ブラウザのコンソールで以下を実行：
-
-```javascript
-// src/utils/generateSampleData.ts の関数を使用
-await initializeSampleData();
-```
+### 主要テーブル
+- `analytics_counts`: 交通量カウントデータ
+- `analytics_speeds`: 速度統計データ
+- `analytics_mobility`: 移動性指標データ
+- `parking_spaces`: 個別駐車スペース状態
+- `parking_groups`: 駐車場グループ管理
+- `zones`: ゾーン定義
 
 ## プロジェクト構造
 
 ```
 src/
 ├── components/       # UIコンポーネント
-│   ├── TrafficOverview.tsx    # 交通データ概要
-│   ├── ParkingMapView.tsx     # 駐車場マップビュー
-│   └── TrafficTrends.tsx      # トレンドグラフ
+│   ├── TrafficOverviewV2.tsx  # Flow Post対応交通データ概要
+│   ├── TrafficTrends.tsx      # トレンドグラフ
+│   └── TrafficNavigation.tsx  # ナビゲーション
 ├── hooks/           # カスタムフック
-│   └── useTrafficData.ts      # データ取得フック
+│   └── useFlowPostData.ts    # Flow Postデータ取得フック
 ├── lib/             # ライブラリ設定
-│   ├── supabase.ts            # Supabaseクライアント（旧版）
-│   └── supabase-v2.ts         # Supabaseクライアント（Flow Post対応）
-└── utils/           # ユーティリティ
-    └── generateSampleData.ts  # サンプルデータ生成
+│   └── supabase.ts           # Supabaseクライアント
+└── App.tsx          # メインアプリケーション
 
 scripts/
-└── import-data.ts   # Flow Postデータインポートスクリプト
+└── import-data.ts   # データインポートスクリプト
 
 supabase/
-├── schema.sql       # データベーススキーマ（旧版）
-└── schema_v2.sql    # データベーススキーマ（Flow Post対応）
+└── schema.sql       # データベーススキーマ
 ```
 
 ## ライセンス

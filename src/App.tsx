@@ -1,7 +1,6 @@
 import { TrafficNavigation } from "./components/TrafficNavigation";
-import { TrafficOverview } from "./components/TrafficOverview";
+import { TrafficOverviewV2 } from "./components/TrafficOverviewV2";
 import { TrafficTrends } from "./components/TrafficTrends";
-import { ParkingMapView } from "./components/ParkingMapView";
 
 export default function App() {
   return (
@@ -10,11 +9,8 @@ export default function App() {
       
       <main className="pt-16">
         <div className="container mx-auto px-6 py-8 space-y-8">
-          {/* Current Traffic Overview */}
-          <TrafficOverview />
-          
-          {/* Parking Map View */}
-          <ParkingMapView />
+          {/* Current Traffic Overview - Flow Post Data */}
+          <TrafficOverviewV2 />
           
           {/* Traffic Trends and Analytics */}
           <TrafficTrends />

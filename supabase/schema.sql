@@ -1,95 +1,174 @@
--- Create traffic_data table
-CREATE TABLE IF NOT EXISTS traffic_data (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  timestamp TIMESTAMPTZ NOT NULL,
-  traffic_volume INTEGER NOT NULL,
-  congestion_rate DECIMAL(5,2) NOT NULL CHECK (congestion_rate >= 0 AND congestion_rate <= 100),
-  parking_utilization DECIMAL(5,2) NOT NULL CHECK (parking_utilization >= 0 AND parking_utilization <= 100),
-  illegal_parking_count INTEGER NOT NULL DEFAULT 0,
+-- Flow Post Dashboard Schema
+-- This schema is designed for the Flow Post traffic monitoring system
+
+-- Drop existing tables if they exist (for re-running this script)
+DROP TABLE IF EXISTS analytics_counts CASCADE;
+DROP TABLE IF EXISTS analytics_speeds CASCADE;
+DROP TABLE IF EXISTS analytics_mobility CASCADE;
+DROP TABLE IF EXISTS parking_groups CASCADE;
+DROP TABLE IF EXISTS parking_spaces CASCADE;
+DROP TABLE IF EXISTS zones CASCADE;
+
+-- Zones definition table
+CREATE TABLE zones (
+  id VARCHAR PRIMARY KEY,
+  name VARCHAR NOT NULL,
+  type VARCHAR NOT NULL CHECK (type IN ('analytics', 'parking', 'group')),
+  polygon TEXT, -- WKT format polygon
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create parking_data table
-CREATE TABLE IF NOT EXISTS parking_data (
+-- Analytics counts table (交通量データ)
+CREATE TABLE analytics_counts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   timestamp TIMESTAMPTZ NOT NULL,
-  latitude DECIMAL(10, 8) NOT NULL,
-  longitude DECIMAL(11, 8) NOT NULL,
-  vehicle_type VARCHAR(10) NOT NULL CHECK (vehicle_type IN ('small', 'medium', 'large')),
-  duration_minutes INTEGER,
+  analytic_id VARCHAR NOT NULL,
+  label INTEGER NOT NULL, -- 1:CAR, 2:PEDESTRIAN, 3:CYCLIST, 4:MISC
+  count INTEGER NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create parking_chunks table for 15-minute intervals
-CREATE TABLE IF NOT EXISTS parking_chunks (
+-- Analytics speeds table (速度統計)
+CREATE TABLE analytics_speeds (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  chunk_timestamp TIMESTAMPTZ NOT NULL,
-  parking_data JSONB NOT NULL,
+  timestamp TIMESTAMPTZ NOT NULL,
+  analytic_id VARCHAR NOT NULL,
+  label INTEGER NOT NULL,
+  max_speed DOUBLE PRECISION,
+  mean_speed DOUBLE PRECISION,
+  v85_speed DOUBLE PRECISION, -- 85パーセンタイル速度
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Analytics mobility table (移動性指標)
+CREATE TABLE analytics_mobility (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  timestamp TIMESTAMPTZ NOT NULL,
+  analytic_id VARCHAR NOT NULL,
+  label INTEGER NOT NULL,
+  density_max DOUBLE PRECISION,
+  density_mean DOUBLE PRECISION,
+  occupancy_rate_max DOUBLE PRECISION,
+  occupancy_rate_mean DOUBLE PRECISION,
+  stay_time_max DOUBLE PRECISION,
+  stay_time_mean DOUBLE PRECISION,
+  flow_rate_max DOUBLE PRECISION,
+  flow_rate_mean DOUBLE PRECISION,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Parking groups table (駐車場グループ)
+CREATE TABLE parking_groups (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  timestamp TIMESTAMPTZ NOT NULL,
+  group_zone_id VARCHAR NOT NULL,
+  occupied_zone_ids TEXT[], -- Array of occupied zone IDs
+  available_zone_ids TEXT[], -- Array of available zone IDs
+  occupied_zones INTEGER DEFAULT 0,
+  available_zones INTEGER DEFAULT 0,
+  last_24h_cumulative_occupied_duration BIGINT,
+  last_24h_max_occupied_duration BIGINT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Parking spaces table (個別駐車スペース)
+CREATE TABLE parking_spaces (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  timestamp TIMESTAMPTZ NOT NULL,
+  zone_id VARCHAR NOT NULL,
+  occupied BOOLEAN DEFAULT false,
+  parked_label INTEGER, -- Vehicle type if occupied
+  is_real_occupied_transition BOOLEAN DEFAULT false,
+  last_occupied_state_transition_time TIMESTAMPTZ,
+  occupied_state_duration BIGINT,
+  last_24h_cumulative_occupied_duration BIGINT,
+  last_24h_max_occupied_duration BIGINT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Create indexes for better query performance
-CREATE INDEX idx_traffic_data_timestamp ON traffic_data(timestamp DESC);
-CREATE INDEX idx_parking_data_timestamp ON parking_data(timestamp DESC);
-CREATE INDEX idx_parking_chunks_timestamp ON parking_chunks(chunk_timestamp DESC);
+CREATE INDEX idx_analytics_counts_timestamp ON analytics_counts(timestamp DESC);
+CREATE INDEX idx_analytics_counts_analytic_id ON analytics_counts(analytic_id);
+CREATE INDEX idx_analytics_speeds_timestamp ON analytics_speeds(timestamp DESC);
+CREATE INDEX idx_analytics_speeds_analytic_id ON analytics_speeds(analytic_id);
+CREATE INDEX idx_analytics_mobility_timestamp ON analytics_mobility(timestamp DESC);
+CREATE INDEX idx_parking_groups_timestamp ON parking_groups(timestamp DESC);
+CREATE INDEX idx_parking_groups_group_zone_id ON parking_groups(group_zone_id);
+CREATE INDEX idx_parking_spaces_timestamp ON parking_spaces(timestamp DESC);
+CREATE INDEX idx_parking_spaces_zone_id ON parking_spaces(zone_id);
 
 -- Enable Row Level Security
-ALTER TABLE traffic_data ENABLE ROW LEVEL SECURITY;
-ALTER TABLE parking_data ENABLE ROW LEVEL SECURITY;
-ALTER TABLE parking_chunks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE zones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE analytics_counts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE analytics_speeds ENABLE ROW LEVEL SECURITY;
+ALTER TABLE analytics_mobility ENABLE ROW LEVEL SECURITY;
+ALTER TABLE parking_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE parking_spaces ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for anonymous read access
-CREATE POLICY "Allow anonymous read access" ON traffic_data
+CREATE POLICY "Allow anonymous read access" ON zones
   FOR SELECT USING (true);
 
-CREATE POLICY "Allow anonymous read access" ON parking_data
+CREATE POLICY "Allow anonymous read access" ON analytics_counts
   FOR SELECT USING (true);
 
-CREATE POLICY "Allow anonymous read access" ON parking_chunks
+CREATE POLICY "Allow anonymous read access" ON analytics_speeds
   FOR SELECT USING (true);
 
--- Create a function to get latest traffic data
-CREATE OR REPLACE FUNCTION get_latest_traffic_data()
-RETURNS TABLE (
-  data_timestamp TIMESTAMPTZ,
-  traffic_volume INTEGER,
-  congestion_rate DECIMAL,
-  parking_utilization DECIMAL,
-  illegal_parking_count INTEGER
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT 
-    t.timestamp AS data_timestamp,
-    t.traffic_volume,
-    t.congestion_rate,
-    t.parking_utilization,
-    t.illegal_parking_count
-  FROM traffic_data t
-  ORDER BY t.timestamp DESC
-  LIMIT 1;
-END;
-$$ LANGUAGE plpgsql;
+CREATE POLICY "Allow anonymous read access" ON analytics_mobility
+  FOR SELECT USING (true);
 
--- Create a function to get traffic trends for the last 24 hours
+CREATE POLICY "Allow anonymous read access" ON parking_groups
+  FOR SELECT USING (true);
+
+CREATE POLICY "Allow anonymous read access" ON parking_spaces
+  FOR SELECT USING (true);
+
+-- Create views for dashboard
+CREATE OR REPLACE VIEW current_traffic_summary AS
+SELECT 
+  timestamp,
+  SUM(CASE WHEN label = 1 THEN count ELSE 0 END) as car_count,
+  SUM(CASE WHEN label = 2 THEN count ELSE 0 END) as pedestrian_count,
+  SUM(CASE WHEN label = 3 THEN count ELSE 0 END) as cyclist_count,
+  SUM(CASE WHEN label = 4 THEN count ELSE 0 END) as misc_count,
+  SUM(count) as total_count
+FROM analytics_counts
+WHERE timestamp = (SELECT MAX(timestamp) FROM analytics_counts)
+GROUP BY timestamp;
+
+CREATE OR REPLACE VIEW current_parking_summary AS
+SELECT 
+  timestamp,
+  COUNT(CASE WHEN occupied = true THEN 1 END) as occupied_spaces,
+  COUNT(CASE WHEN occupied = false THEN 1 END) as available_spaces,
+  ROUND(COUNT(CASE WHEN occupied = true THEN 1 END)::numeric / COUNT(*)::numeric * 100, 2) as occupancy_rate
+FROM parking_spaces
+WHERE timestamp = (SELECT MAX(timestamp) FROM parking_spaces)
+GROUP BY timestamp;
+
+-- Function to get traffic trends
 CREATE OR REPLACE FUNCTION get_traffic_trends(hours INTEGER DEFAULT 24)
 RETURNS TABLE (
   data_timestamp TIMESTAMPTZ,
-  traffic_volume INTEGER,
-  congestion_rate DECIMAL,
-  parking_utilization DECIMAL,
-  illegal_parking_count INTEGER
+  car_count BIGINT,
+  pedestrian_count BIGINT,
+  cyclist_count BIGINT,
+  misc_count BIGINT,
+  total_count BIGINT
 ) AS $$
 BEGIN
   RETURN QUERY
   SELECT 
-    t.timestamp AS data_timestamp,
-    t.traffic_volume,
-    t.congestion_rate,
-    t.parking_utilization,
-    t.illegal_parking_count
-  FROM traffic_data t
-  WHERE t.timestamp >= NOW() - INTERVAL '1 hour' * hours
-  ORDER BY t.timestamp ASC;
+    ac.timestamp AS data_timestamp,
+    SUM(CASE WHEN ac.label = 1 THEN ac.count ELSE 0 END) as car_count,
+    SUM(CASE WHEN ac.label = 2 THEN ac.count ELSE 0 END) as pedestrian_count,
+    SUM(CASE WHEN ac.label = 3 THEN ac.count ELSE 0 END) as cyclist_count,
+    SUM(CASE WHEN ac.label = 4 THEN ac.count ELSE 0 END) as misc_count,
+    SUM(ac.count) as total_count
+  FROM analytics_counts ac
+  WHERE ac.timestamp >= NOW() - INTERVAL '1 hour' * hours
+  GROUP BY ac.timestamp
+  ORDER BY ac.timestamp ASC;
 END;
 $$ LANGUAGE plpgsql;
