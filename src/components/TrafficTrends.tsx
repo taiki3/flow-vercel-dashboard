@@ -6,6 +6,11 @@ import { Skeleton } from "./ui/skeleton";
 export function TrafficTrends() {
   const { trends, loading, error } = useTrafficTrends();
 
+  console.log('TrafficTrends - loading:', loading, 'error:', error, 'trends count:', trends.length);
+  if (trends.length > 0) {
+    console.log('First trend data:', trends[0]);
+  }
+
   // Format data for charts
   const chartData = trends.map(item => ({
     time: new Date(item.timestamp).toLocaleTimeString('ja-JP', { 

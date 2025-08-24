@@ -208,14 +208,16 @@ export function useTrafficTrends(hours: number = 24) {
 
   const fetchTrends = async () => {
     try {
-      const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+      // データが2025年7月28日のものなので、すべてのデータを取得
+      console.log('Fetching all trends data');
       
       const { data, error } = await supabase
         .from('analytics_counts')
         .select('timestamp, label, count')
-        .gte('timestamp', since)
         .order('timestamp', { ascending: true });
 
+      console.log('Supabase response - error:', error, 'data length:', data?.length);
+      
       if (error) throw error;
 
       // Group by timestamp
