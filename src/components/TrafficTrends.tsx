@@ -12,10 +12,10 @@ export function TrafficTrends() {
       hour: '2-digit', 
       minute: '2-digit' 
     }),
-    交通量: item.traffic_volume,
-    混雑率: item.congestion_rate,
-    駐車場利用率: item.parking_utilization,
-    違法駐車: item.illegal_parking_count
+    交通量: item.total_count,
+    車両: item.car_count,
+    歩行者: item.pedestrian_count,
+    自転車: item.cyclist_count
   }));
 
   if (loading) {
@@ -83,10 +83,10 @@ export function TrafficTrends() {
           </CardContent>
         </Card>
 
-        {/* Congestion Rate Trend */}
+        {/* Vehicle Count Trend */}
         <Card>
           <CardHeader>
-            <CardTitle>混雑率の推移</CardTitle>
+            <CardTitle>車両通行量の推移</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -97,11 +97,11 @@ export function TrafficTrends() {
                   tick={{ fontSize: 12 }}
                   interval="preserveStartEnd"
                 />
-                <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Line 
                   type="monotone" 
-                  dataKey="混雑率" 
+                  dataKey="車両" 
                   stroke="#f97316" 
                   strokeWidth={2}
                   dot={false}
@@ -111,16 +111,16 @@ export function TrafficTrends() {
           </CardContent>
         </Card>
 
-        {/* Parking Utilization */}
+        {/* Pedestrian Count Trend */}
         <Card>
           <CardHeader>
-            <CardTitle>駐車場利用率の推移</CardTitle>
+            <CardTitle>歩行者数の推移</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <AreaChart data={chartData}>
                 <defs>
-                  <linearGradient id="colorParking" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorPedestrian" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                   </linearGradient>
@@ -131,24 +131,24 @@ export function TrafficTrends() {
                   tick={{ fontSize: 12 }}
                   interval="preserveStartEnd"
                 />
-                <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Area 
                   type="monotone" 
-                  dataKey="駐車場利用率" 
+                  dataKey="歩行者" 
                   stroke="#10b981" 
                   fillOpacity={1} 
-                  fill="url(#colorParking)" 
+                  fill="url(#colorPedestrian)" 
                 />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Illegal Parking */}
+        {/* Cyclist Count Trend */}
         <Card>
           <CardHeader>
-            <CardTitle>違法駐車台数の推移</CardTitle>
+            <CardTitle>自転車通行量の推移</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -162,7 +162,7 @@ export function TrafficTrends() {
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Bar 
-                  dataKey="違法駐車" 
+                  dataKey="自転車" 
                   fill="#dc2626" 
                   radius={[4, 4, 0, 0]}
                 />
@@ -183,34 +183,34 @@ export function TrafficTrends() {
               <p className="text-sm text-muted-foreground">平均交通量</p>
               <p className="text-2xl font-semibold">
                 {trends.length > 0 
-                  ? Math.round(trends.reduce((acc, t) => acc + t.traffic_volume, 0) / trends.length)
+                  ? Math.round(trends.reduce((acc, t) => acc + t.total_count, 0) / trends.length)
                   : 0}
-                <span className="text-sm font-normal text-muted-foreground ml-1">台/時</span>
+                <span className="text-sm font-normal text-muted-foreground ml-1">件/時</span>
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">平均混雑率</p>
+              <p className="text-sm text-muted-foreground">平均車両数</p>
               <p className="text-2xl font-semibold">
                 {trends.length > 0 
-                  ? Math.round(trends.reduce((acc, t) => acc + t.congestion_rate, 0) / trends.length)
+                  ? Math.round(trends.reduce((acc, t) => acc + t.car_count, 0) / trends.length)
                   : 0}
-                <span className="text-sm font-normal text-muted-foreground ml-1">%</span>
+                <span className="text-sm font-normal text-muted-foreground ml-1">台</span>
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">最大駐車場利用率</p>
+              <p className="text-sm text-muted-foreground">平均歩行者数</p>
               <p className="text-2xl font-semibold">
                 {trends.length > 0 
-                  ? Math.max(...trends.map(t => t.parking_utilization))
+                  ? Math.round(trends.reduce((acc, t) => acc + t.pedestrian_count, 0) / trends.length)
                   : 0}
-                <span className="text-sm font-normal text-muted-foreground ml-1">%</span>
+                <span className="text-sm font-normal text-muted-foreground ml-1">人</span>
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">累計違法駐車</p>
+              <p className="text-sm text-muted-foreground">平均自転車数</p>
               <p className="text-2xl font-semibold">
                 {trends.length > 0 
-                  ? trends.reduce((acc, t) => acc + t.illegal_parking_count, 0)
+                  ? Math.round(trends.reduce((acc, t) => acc + t.cyclist_count, 0) / trends.length)
                   : 0}
                 <span className="text-sm font-normal text-muted-foreground ml-1">台</span>
               </p>

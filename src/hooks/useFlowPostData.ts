@@ -246,7 +246,9 @@ export function useTrafficTrends(hours: number = 24) {
         summary.total_count += count;
       });
 
-      setTrends(Array.from(grouped.values()));
+      const trendsArray = Array.from(grouped.values());
+      console.log('Fetched trends:', trendsArray.length, 'data points');
+      setTrends(trendsArray);
     } catch (err) {
       console.error('Error fetching trends:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch trends');
