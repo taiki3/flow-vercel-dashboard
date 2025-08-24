@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { Database } from 'duckdb-async';
 import { createClient } from '@supabase/supabase-js';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import fetch from 'node-fetch';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -16,7 +18,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// プロキシ設定
+const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
+
+if (proxyUrl) {
+  console.log(`🔌 プロキシ使用: ${proxyUrl}`);
+}
+
+// プロキシ対応のSupabaseクライアント
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  global: {
+    fetch: (url: any, options: any = {}) => {
+      return fetch(url, { ...options, agent } as any);
+    }
+  }
+});
 const DATA_DIR = '/home/yoshinaka/devel/flow_post/dummy_data_generator/dummy_data';
 
 async function importAnalyticsCounts(db: Database, targetDate: string = '2025-07-28') {
