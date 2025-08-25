@@ -17,14 +17,40 @@ export function MapView() {
       
       console.log('Initializing map with API key:', apiKey);
 
-      // 地図の初期化 - MapTiler Streets style
+      // 地図の初期化 - MapTiler Streets V2 style
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: `https://api.maptiler.com/maps/jp-mierune-streets/style.json?key=${apiKey}`,
+        style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`,
         center: [139.6380, 35.4660], // 横浜の座標
         zoom: 13,
         pitch: 0,
         bearing: 0
+      });
+
+      // styleimagemissingイベントハンドラー - 空の画像名エラーを処理
+      map.current.on('styleimagemissing', (e) => {
+        const id = e.id;
+        
+        // 空の画像名や空白のみの画像名をフィルタリング
+        if (!id || id.trim() === '') {
+          console.log('Skipping empty image id');
+          // 透明な1x1ピクセルの画像を追加してエラーを回避
+          const canvas = document.createElement('canvas');
+          canvas.width = 1;
+          canvas.height = 1;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = 'transparent';
+            ctx.fillRect(0, 0, 1, 1);
+          }
+          
+          if (!map.current?.hasImage(id)) {
+            map.current?.addImage(id, canvas);
+          }
+          return;
+        }
+        
+        console.log(`Missing image: ${id}`);
       });
 
       // 地図のロードイベント
@@ -34,10 +60,15 @@ export function MapView() {
 
       // エラーハンドリング
       map.current.on('error', (e) => {
+        // 空の画像名エラーは無視
+        if (e.error?.message?.includes('Image " "')) {
+          return;
+        }
+        
         console.error('Map error:', e);
         if (e.error?.message?.includes('401') || e.error?.message?.includes('403')) {
           setMapError('APIキーの認証に失敗しました。APIキーを確認してください。');
-        } else {
+        } else if (!e.error?.message?.includes('styleimagemissing')) {
           setMapError('地図の読み込みに失敗しました');
         }
       });
