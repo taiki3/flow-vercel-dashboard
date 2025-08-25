@@ -1,6 +1,7 @@
 import { TrafficNavigation } from "./components/TrafficNavigation";
 import { TrafficOverviewV2 } from "./components/TrafficOverviewV2";
 import { TrafficTrends } from "./components/TrafficTrends";
+import { MapView } from "./components/MapView";
 
 export default function App() {
   return (
@@ -14,6 +15,9 @@ export default function App() {
           
           {/* Traffic Trends and Analytics */}
           <TrafficTrends />
+          
+          {/* Interactive Map View */}
+          <MapView />
         </div>
       </main>
     </div>
