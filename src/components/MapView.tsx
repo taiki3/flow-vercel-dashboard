@@ -17,10 +17,10 @@ export function MapView() {
       
       console.log('Initializing map with API key:', apiKey);
 
-      // 地図の初期化 - MapTiler Basic style
+      // 地図の初期化 - MapTiler Streets style
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: `https://api.maptiler.com/maps/basic-v2/style.json?key=${apiKey}`,
+        style: `https://api.maptiler.com/maps/jp-mierune-streets/style.json?key=${apiKey}`,
         center: [139.6380, 35.4660], // 横浜の座標
         zoom: 13,
         pitch: 0,
@@ -30,50 +30,6 @@ export function MapView() {
       // 地図のロードイベント
       map.current.on('load', () => {
         console.log('Map loaded successfully');
-        
-        // 3D建物を追加
-        const layers = map.current?.getStyle().layers;
-        if (layers) {
-          const labelLayerId = layers.find(
-            (layer) => layer.type === 'symbol' && layer.layout && layer.layout['text-field']
-          )?.id;
-
-          if (labelLayerId) {
-            map.current?.addLayer(
-              {
-                'id': '3d-buildings',
-                'source': 'composite',
-                'source-layer': 'building',
-                'filter': ['==', 'extrude', 'true'],
-                'type': 'fill-extrusion',
-                'minzoom': 15,
-                'paint': {
-                  'fill-extrusion-color': '#aaa',
-                  'fill-extrusion-height': [
-                    'interpolate',
-                    ['linear'],
-                    ['zoom'],
-                    15,
-                    0,
-                    15.05,
-                    ['get', 'height']
-                  ],
-                  'fill-extrusion-base': [
-                    'interpolate',
-                    ['linear'],
-                    ['zoom'],
-                    15,
-                    0,
-                    15.05,
-                    ['get', 'min_height']
-                  ],
-                  'fill-extrusion-opacity': 0.6
-                }
-              },
-              labelLayerId
-            );
-          }
-        }
       });
 
       // エラーハンドリング
