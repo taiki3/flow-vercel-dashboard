@@ -45,45 +45,90 @@ export function MapView() {
       currentMap.on('load', () => {
         console.log('Map loaded successfully with MapTiler style');
         
-        // 中央やや下に半透明の長方形を追加
+        // 中央下に半透明の長方形を3つ横に並べて追加
         const center = currentMap.getCenter();
         const bounds = currentMap.getBounds();
+        const mapContainer = currentMap.getContainer();
         
-        // 30px下にオフセット（地図の高さに対する比率で計算）
-        const mapHeight = currentMap.getContainer().offsetHeight;
-        const pixelOffset = 30;
+        // 150px下にオフセット（地図の高さに対する比率で計算）
+        const mapHeight = mapContainer.offsetHeight;
+        const mapWidth = mapContainer.offsetWidth;
+        const pixelOffsetY = 150;
         const latRange = bounds.getNorth() - bounds.getSouth();
-        const latOffset = (latRange * pixelOffset) / mapHeight;
-        const rectCenter: [number, number] = [center.lng, center.lat - latOffset];
+        const lngRange = bounds.getEast() - bounds.getWest();
+        const latOffset = (latRange * pixelOffsetY) / mapHeight;
         
         // 長方形のサイズ（度単位で概算）- 20x10px
-        const width = 0.0002;  // 約20px相当
-        const height = 0.0001; // 約10px相当
+        const rectWidth = (lngRange * 20) / mapWidth;  // 約20px相当
+        const rectHeight = (latRange * 10) / mapHeight; // 約10px相当
+        const spacing = (lngRange * 10) / mapWidth; // 10px間隔
+        
+        // 3つの長方形の中心Y座標
+        const centerY = center.lat - latOffset;
+        
+        // 3つの長方形を含むFeatureCollection
+        const rectangles = {
+          type: 'FeatureCollection',
+          features: [
+            // 左の長方形
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [[
+                  [center.lng - rectWidth - spacing - rectWidth/2, centerY - rectHeight/2],
+                  [center.lng - spacing - rectWidth/2, centerY - rectHeight/2],
+                  [center.lng - spacing - rectWidth/2, centerY + rectHeight/2],
+                  [center.lng - rectWidth - spacing - rectWidth/2, centerY + rectHeight/2],
+                  [center.lng - rectWidth - spacing - rectWidth/2, centerY - rectHeight/2]
+                ]]
+              },
+              properties: {}
+            },
+            // 中央の長方形
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [[
+                  [center.lng - rectWidth/2, centerY - rectHeight/2],
+                  [center.lng + rectWidth/2, centerY - rectHeight/2],
+                  [center.lng + rectWidth/2, centerY + rectHeight/2],
+                  [center.lng - rectWidth/2, centerY + rectHeight/2],
+                  [center.lng - rectWidth/2, centerY - rectHeight/2]
+                ]]
+              },
+              properties: {}
+            },
+            // 右の長方形
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [[
+                  [center.lng + spacing + rectWidth/2, centerY - rectHeight/2],
+                  [center.lng + rectWidth + spacing + rectWidth/2, centerY - rectHeight/2],
+                  [center.lng + rectWidth + spacing + rectWidth/2, centerY + rectHeight/2],
+                  [center.lng + spacing + rectWidth/2, centerY + rectHeight/2],
+                  [center.lng + spacing + rectWidth/2, centerY - rectHeight/2]
+                ]]
+              },
+              properties: {}
+            }
+          ]
+        };
         
         // GeoJSON形式で長方形を定義
-        currentMap.addSource('center-rectangle', {
+        currentMap.addSource('center-rectangles', {
           type: 'geojson',
-          data: {
-            type: 'Feature',
-            geometry: {
-              type: 'Polygon',
-              coordinates: [[
-                [rectCenter[0] - width/2, rectCenter[1] - height/2],
-                [rectCenter[0] + width/2, rectCenter[1] - height/2],
-                [rectCenter[0] + width/2, rectCenter[1] + height/2],
-                [rectCenter[0] - width/2, rectCenter[1] + height/2],
-                [rectCenter[0] - width/2, rectCenter[1] - height/2]
-              ]]
-            },
-            properties: {}
-          }
+          data: rectangles
         });
         
         // 半透明の長方形レイヤーを追加（青系の色）
         currentMap.addLayer({
-          id: 'center-rectangle-layer',
+          id: 'center-rectangles-layer',
           type: 'fill',
-          source: 'center-rectangle',
+          source: 'center-rectangles',
           paint: {
             'fill-color': '#0066CC',
             'fill-opacity': 0.5
@@ -92,9 +137,9 @@ export function MapView() {
         
         // 長方形の境界線も追加（青系の色）
         currentMap.addLayer({
-          id: 'center-rectangle-outline',
+          id: 'center-rectangles-outline',
           type: 'line',
-          source: 'center-rectangle',
+          source: 'center-rectangles',
           paint: {
             'line-color': '#0044AA',
             'line-width': 2,
