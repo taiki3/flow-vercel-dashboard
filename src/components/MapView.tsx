@@ -86,7 +86,8 @@ export function MapView() {
               properties: {
                 color: 'red',
                 vehicleNumber: 3248,
-                parkingTime: '01:45:23'
+                parkingTime: '01:45:23',
+                imageUrl: '/picture/0001.jpg'
               }
             },
             // 中央の長方形
@@ -105,7 +106,8 @@ export function MapView() {
               properties: {
                 color: 'blue',
                 vehicleNumber: 7891,
-                parkingTime: '00:23:15'
+                parkingTime: '00:23:15',
+                imageUrl: '/picture/0002.jpg'
               }
             },
             // 右の長方形
@@ -124,7 +126,8 @@ export function MapView() {
               properties: {
                 color: 'blue',
                 vehicleNumber: 5612,
-                parkingTime: '02:01:47'
+                parkingTime: '02:01:47',
+                imageUrl: '/picture/0003.jpg'
               }
             }
           ]
@@ -188,11 +191,17 @@ export function MapView() {
           const coordinates = e.lngLat;
           const vehicleNumber = feature.properties?.vehicleNumber;
           const parkingTime = feature.properties?.parkingTime;
+          const imageUrl = feature.properties?.imageUrl;
           
           // ポップアップの内容
           const popupContent = `
-            <div style="padding: 8px; font-size: 14px;">
-              <div style="font-weight: bold; margin-bottom: 4px;">駐車情報</div>
+            <div style="padding: 10px; font-size: 14px; min-width: 150px;">
+              <div style="font-weight: bold; margin-bottom: 8px;">駐車情報</div>
+              ${imageUrl ? `
+                <div style="margin-bottom: 8px; text-align: center;">
+                  <img src="${imageUrl}" alt="車両画像" style="height: 60px; width: auto; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                </div>
+              ` : ''}
               <div style="margin-bottom: 2px;">車番: <strong>${vehicleNumber}</strong></div>
               <div>駐車時間: <strong>${parkingTime}</strong></div>
             </div>
