@@ -84,7 +84,9 @@ export function MapView() {
                 ]]
               },
               properties: {
-                color: 'red'
+                color: 'red',
+                vehicleNumber: 3248,
+                parkingTime: '01:45:23'
               }
             },
             // 中央の長方形
@@ -101,7 +103,9 @@ export function MapView() {
                 ]]
               },
               properties: {
-                color: 'blue'
+                color: 'blue',
+                vehicleNumber: 7891,
+                parkingTime: '00:23:15'
               }
             },
             // 右の長方形
@@ -118,7 +122,9 @@ export function MapView() {
                 ]]
               },
               properties: {
-                color: 'blue'
+                color: 'blue',
+                vehicleNumber: 5612,
+                parkingTime: '02:01:47'
               }
             }
           ]
@@ -163,6 +169,44 @@ export function MapView() {
             'line-width': 2,
             'line-opacity': 0.8
           }
+        });
+        
+        // カーソルをポインターに変更（ホバー時）
+        currentMap.on('mouseenter', 'center-rectangles-layer', () => {
+          currentMap.getCanvas().style.cursor = 'pointer';
+        });
+        
+        currentMap.on('mouseleave', 'center-rectangles-layer', () => {
+          currentMap.getCanvas().style.cursor = '';
+        });
+        
+        // クリックイベントでポップアップを表示
+        currentMap.on('click', 'center-rectangles-layer', (e) => {
+          if (!e.features || e.features.length === 0) return;
+          
+          const feature = e.features[0];
+          const coordinates = e.lngLat;
+          const vehicleNumber = feature.properties?.vehicleNumber;
+          const parkingTime = feature.properties?.parkingTime;
+          
+          // ポップアップの内容
+          const popupContent = `
+            <div style="padding: 8px; font-size: 14px;">
+              <div style="font-weight: bold; margin-bottom: 4px;">駐車情報</div>
+              <div style="margin-bottom: 2px;">車番: <strong>${vehicleNumber}</strong></div>
+              <div>駐車時間: <strong>${parkingTime}</strong></div>
+            </div>
+          `;
+          
+          // ポップアップを作成して表示
+          new maplibregl.Popup({
+            closeButton: true,
+            closeOnClick: true,
+            offset: [0, -10]
+          })
+            .setLngLat(coordinates)
+            .setHTML(popupContent)
+            .addTo(currentMap);
         });
         
         // 3D建物レイヤーを追加（エラーが出ない範囲で）
