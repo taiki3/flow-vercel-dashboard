@@ -22,8 +22,8 @@ export function MapView() {
       map.current = new maplibregl.Map({
         container: mapContainer.current,
         style: `https://api.maptiler.com/maps/jp-mierune-streets/style.json?key=${apiKey}`,
-        center: [139.6380, 35.4660], // 横浜の座標
-        zoom: 13,
+        center: [140.38660526412602, 35.76508886395624], // 成田空港第一ターミナル
+        zoom: 15,
         pitch: 0,
         bearing: 0,
         antialias: true
