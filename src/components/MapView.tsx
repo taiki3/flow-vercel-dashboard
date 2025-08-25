@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -6,28 +6,102 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 export function MapView() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    // MapTiler APIキー
-    const apiKey = import.meta.env.VITE_MAPTILER_API_KEY || '9cCpjscGHon3xPEFPZZ4';
+    try {
+      // MapTiler APIキー
+      const apiKey = import.meta.env.VITE_MAPTILER_API_KEY || '9cCpjscGHon3xPEFPZZ4';
+      
+      console.log('Initializing map with API key:', apiKey);
 
-    // 地図の初期化
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`,
-      center: [139.6380, 35.4660], // 横浜の座標
-      zoom: 12,
-      pitch: 45,
-      bearing: -17.6
-    });
+      // 地図の初期化 - MapTiler Basic style
+      map.current = new maplibregl.Map({
+        container: mapContainer.current,
+        style: `https://api.maptiler.com/maps/basic-v2/style.json?key=${apiKey}`,
+        center: [139.6380, 35.4660], // 横浜の座標
+        zoom: 13,
+        pitch: 0,
+        bearing: 0
+      });
 
-    // ナビゲーションコントロールを追加
-    map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
+      // 地図のロードイベント
+      map.current.on('load', () => {
+        console.log('Map loaded successfully');
+        
+        // 3D建物を追加
+        const layers = map.current?.getStyle().layers;
+        if (layers) {
+          const labelLayerId = layers.find(
+            (layer) => layer.type === 'symbol' && layer.layout && layer.layout['text-field']
+          )?.id;
 
-    // フルスクリーンコントロールを追加
-    map.current.addControl(new maplibregl.FullscreenControl());
+          if (labelLayerId) {
+            map.current?.addLayer(
+              {
+                'id': '3d-buildings',
+                'source': 'composite',
+                'source-layer': 'building',
+                'filter': ['==', 'extrude', 'true'],
+                'type': 'fill-extrusion',
+                'minzoom': 15,
+                'paint': {
+                  'fill-extrusion-color': '#aaa',
+                  'fill-extrusion-height': [
+                    'interpolate',
+                    ['linear'],
+                    ['zoom'],
+                    15,
+                    0,
+                    15.05,
+                    ['get', 'height']
+                  ],
+                  'fill-extrusion-base': [
+                    'interpolate',
+                    ['linear'],
+                    ['zoom'],
+                    15,
+                    0,
+                    15.05,
+                    ['get', 'min_height']
+                  ],
+                  'fill-extrusion-opacity': 0.6
+                }
+              },
+              labelLayerId
+            );
+          }
+        }
+      });
+
+      // エラーハンドリング
+      map.current.on('error', (e) => {
+        console.error('Map error:', e);
+        if (e.error?.message?.includes('401') || e.error?.message?.includes('403')) {
+          setMapError('APIキーの認証に失敗しました。APIキーを確認してください。');
+        } else {
+          setMapError('地図の読み込みに失敗しました');
+        }
+      });
+
+      // ナビゲーションコントロールを追加
+      map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+      // フルスクリーンコントロールを追加
+      map.current.addControl(new maplibregl.FullscreenControl());
+
+      // スケールコントロールを追加
+      map.current.addControl(new maplibregl.ScaleControl({
+        maxWidth: 200,
+        unit: 'metric'
+      }), 'bottom-left');
+
+    } catch (error) {
+      console.error('Failed to initialize map:', error);
+      setMapError('地図の初期化に失敗しました');
+    }
 
     return () => {
       map.current?.remove();
@@ -40,9 +114,15 @@ export function MapView() {
         <CardTitle>リアルタイム交通状況マップ</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
+        {mapError && (
+          <div className="p-4 text-red-600 bg-red-50 rounded-t-lg">
+            {mapError}
+          </div>
+        )}
         <div 
           ref={mapContainer} 
           className="w-full h-[600px] rounded-b-lg"
+          style={{ backgroundColor: '#f0f0f0' }}
         />
       </CardContent>
     </Card>
