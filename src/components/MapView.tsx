@@ -12,88 +12,100 @@ export function MapView() {
     if (map.current) return;
 
     // mapContainer.currentが存在しない場合も処理を中断
-    if (!mapContainer.current) {
-      console.error('Map container is not available');
-      return;
-    }
+    if (!mapContainer.current) return;
 
-    console.log('Initializing map with container:', mapContainer.current);
-    console.log('Container dimensions:', {
-      width: mapContainer.current.offsetWidth,
-      height: mapContainer.current.offsetHeight
-    });
+    // MapTiler APIキー
+    const apiKey = import.meta.env.VITE_MAPTILER_API_KEY || '9cCpjscGHon3xPEFPZZ4';
 
     try {
-      // OpenStreetMapのタイルを直接使用する設定
+      // MapTilerのスタイルを使用
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: {
-          version: 8,
-          sources: {
-            'osm-tiles': {
-              type: 'raster',
-              tiles: [
-                'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
-              ],
-              tileSize: 256,
-              attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }
-          },
-          layers: [
-            {
-              id: 'osm-tiles-layer',
-              type: 'raster',
-              source: 'osm-tiles',
-              minzoom: 0,
-              maxzoom: 19
-            }
-          ]
-        },
+        style: `https://api.maptiler.com/maps/jp-mierune-streets/style.json?key=${apiKey}`,
         center: [139.6380, 35.4660], // 横浜の座標
-        zoom: 12,
+        zoom: 13,
         pitch: 0,
-        bearing: 0
+        bearing: 0,
+        antialias: true
       });
 
       const currentMap = map.current;
 
+      // 空の画像IDエラーを安全に無視する
+      currentMap.on('styleimagemissing', (e) => {
+        const id = e.id;
+        if (!id || id.trim() === '') {
+          // 空のIDの場合は何もせず処理を終了
+          return;
+        }
+        console.warn(`見つからない画像ID: ${id}`);
+      });
+
       // 地図のロードイベント
       currentMap.on('load', () => {
-        console.log('Map loaded successfully with OpenStreetMap tiles');
-        console.log('Map center:', currentMap.getCenter());
-        console.log('Map zoom:', currentMap.getZoom());
-        console.log('Map bounds:', currentMap.getBounds());
+        console.log('Map loaded successfully with MapTiler style');
         
-        // キャンバス要素の確認
-        const canvas = mapContainer.current?.querySelector('canvas');
-        if (canvas) {
-          console.log('Canvas found:', {
-            width: canvas.width,
-            height: canvas.height,
-            style: canvas.style.cssText
-          });
-        } else {
-          console.error('Canvas element not found in map container');
+        // 3D建物レイヤーを追加（エラーが出ない範囲で）
+        try {
+          if (!currentMap.getSource('composite')) {
+            return;
+          }
+          
+          const layers = currentMap.getStyle().layers;
+          const labelLayerId = layers?.find(
+            layer => layer.type === 'symbol' && layer.layout && layer.layout['text-field']
+          )?.id;
+
+          if (labelLayerId) {
+            currentMap.addLayer({
+              id: '3d-buildings',
+              source: 'composite',
+              'source-layer': 'building',
+              filter: ['==', 'extrude', 'true'],
+              type: 'fill-extrusion',
+              minzoom: 15,
+              paint: {
+                'fill-extrusion-color': '#aaa',
+                'fill-extrusion-height': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  15,
+                  0,
+                  15.05,
+                  ['get', 'height']
+                ],
+                'fill-extrusion-base': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  15,
+                  0,
+                  15.05,
+                  ['get', 'min_height']
+                ],
+                'fill-extrusion-opacity': 0.6
+              }
+            }, labelLayerId);
+          }
+        } catch (error) {
+          // 3D建物の追加に失敗しても地図は表示する
+          console.log('3D buildings not available for this style');
         }
       });
 
-      // タイルの読み込み状態を監視
-      currentMap.on('data', (e) => {
-        if (e.sourceDataType === 'visibility' || e.isSourceLoaded) {
-          console.log('Map data event:', e.type, e.sourceDataType);
-        }
-      });
-
-      // レンダリング完了イベント
-      currentMap.on('render', () => {
-        console.log('Map rendered');
-      });
-
-      // エラーハンドリング
+      // エラーハンドリング（重要なエラーのみ）
       currentMap.on('error', (e) => {
-        console.error('Map error:', e);
+        // 空の画像名エラーやスタイル関連の警告は無視
+        if (e.error?.message?.includes('Image " "') || 
+            e.error?.message?.includes('styleimagemissing')) {
+          return;
+        }
+        
+        // APIキー関連のエラー
+        if (e.error?.message?.includes('401') || e.error?.message?.includes('403')) {
+          console.error('MapTiler APIキーの認証に失敗しました。');
+        }
       });
 
       // コントロールの追加
@@ -104,10 +116,14 @@ export function MapView() {
         unit: 'metric'
       }), 'bottom-left');
 
-      // 著作権表示
-      currentMap.addControl(new maplibregl.AttributionControl({
-        compact: false
-      }));
+      // ジオロケーションコントロールを追加
+      currentMap.addControl(new maplibregl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true
+        },
+        trackUserLocation: true,
+        showUserHeading: true
+      }), 'top-right');
 
     } catch (error) {
       console.error('地図の初期化に失敗しました:', error);
@@ -118,7 +134,7 @@ export function MapView() {
       map.current?.remove();
       map.current = null;
     };
-  }, []); // 依存配列は空のまま
+  }, []);
 
   return (
     <Card className="col-span-full">
