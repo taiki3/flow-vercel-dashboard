@@ -1,116 +1,108 @@
-import { useEffect, useRef, useState } from 'react';
-import maplibregl from 'maplibre-gl';
+import { useEffect, useRef } from 'react';
+import maplibregl, { Map } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 export function MapView() {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<maplibregl.Map | null>(null);
-  const [mapError, setMapError] = useState<string | null>(null);
+  const map = useRef<Map | null>(null);
 
   useEffect(() => {
+    // React 18のStrict Modeによる二重実行を防ぐ
+    // マップが既に初期化されている場合は、何もしない
+    if (map.current) return;
+
+    // mapContainer.currentが存在しない場合も処理を中断
     if (!mapContainer.current) return;
 
-    try {
-      // MapTiler APIキー
-      const apiKey = import.meta.env.VITE_MAPTILER_API_KEY || '9cCpjscGHon3xPEFPZZ4';
-      
-      console.log('Initializing map with API key:', apiKey);
+    // APIキーは環境変数から取得（フォールバックあり）
+    const apiKey = import.meta.env.VITE_MAPTILER_API_KEY || '9cCpjscGHon3xPEFPZZ4';
 
-      // 地図の初期化 - MapTiler Streets V2 style
+    if (!apiKey || apiKey === '9cCpjscGHon3xPEFPZZ4') {
+      console.warn("MapTiler APIキーが設定されていないか、デフォルトキーを使用しています。");
+    }
+
+    try {
       map.current = new maplibregl.Map({
         container: mapContainer.current,
         style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`,
         center: [139.6380, 35.4660], // 横浜の座標
-        zoom: 13,
+        zoom: 12,
         pitch: 0,
         bearing: 0
       });
 
-      // styleimagemissingイベントハンドラー - 空の画像名エラーを処理
-      map.current.on('styleimagemissing', (e) => {
+      const currentMap = map.current;
+
+      // 空の画像IDエラーを安全に無視する
+      // このエラーは地図スタイル自体に起因することがあり、レンダリングをブロックするものではない
+      currentMap.on('styleimagemissing', (e) => {
         const id = e.id;
-        
-        // 空の画像名や空白のみの画像名をフィルタリング
         if (!id || id.trim() === '') {
-          console.log('Skipping empty image id');
-          // 透明な1x1ピクセルの画像を追加してエラーを回避
-          const canvas = document.createElement('canvas');
-          canvas.width = 1;
-          canvas.height = 1;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.fillStyle = 'transparent';
-            ctx.fillRect(0, 0, 1, 1);
-          }
-          
-          if (!map.current?.hasImage(id)) {
-            map.current?.addImage(id, canvas);
-          }
+          // 空のIDの場合は何もせず処理を終了
           return;
         }
-        
-        console.log(`Missing image: ${id}`);
+        console.warn(`見つからない画像ID: ${id}`);
       });
 
       // 地図のロードイベント
-      map.current.on('load', () => {
+      currentMap.on('load', () => {
         console.log('Map loaded successfully');
       });
 
-      // エラーハンドリング
-      map.current.on('error', (e) => {
+      // エラーハンドリング（styleimagemissing以外の重要なエラーのみ）
+      currentMap.on('error', (e) => {
         // 空の画像名エラーは無視
-        if (e.error?.message?.includes('Image " "')) {
+        if (e.error?.message?.includes('Image " "') || 
+            e.error?.message?.includes('styleimagemissing')) {
           return;
         }
         
-        console.error('Map error:', e);
+        // APIキー関連のエラーのみログ出力
         if (e.error?.message?.includes('401') || e.error?.message?.includes('403')) {
-          setMapError('APIキーの認証に失敗しました。APIキーを確認してください。');
-        } else if (!e.error?.message?.includes('styleimagemissing')) {
-          setMapError('地図の読み込みに失敗しました');
+          console.error('MapTiler APIキーの認証に失敗しました。APIキーを確認してください。');
+        } else {
+          console.error('Map error:', e);
         }
       });
 
-      // ナビゲーションコントロールを追加
-      map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
-
-      // フルスクリーンコントロールを追加
-      map.current.addControl(new maplibregl.FullscreenControl());
-
-      // スケールコントロールを追加
-      map.current.addControl(new maplibregl.ScaleControl({
+      // コントロールの追加
+      currentMap.addControl(new maplibregl.NavigationControl(), 'top-right');
+      currentMap.addControl(new maplibregl.FullscreenControl(), 'top-right');
+      currentMap.addControl(new maplibregl.ScaleControl({
         maxWidth: 200,
         unit: 'metric'
       }), 'bottom-left');
 
     } catch (error) {
-      console.error('Failed to initialize map:', error);
-      setMapError('地図の初期化に失敗しました');
+      console.error('地図の初期化に失敗しました:', error);
     }
 
+    // コンポーネントがアンマウントされる際にマップをクリーンアップ
     return () => {
       map.current?.remove();
+      map.current = null;
     };
-  }, []);
+  }, []); // 依存配列は空のまま
 
   return (
     <Card className="col-span-full">
       <CardHeader>
         <CardTitle>リアルタイム交通状況マップ</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        {mapError && (
-          <div className="p-4 text-red-600 bg-red-50 rounded-t-lg">
-            {mapError}
-          </div>
-        )}
+      <CardContent className="p-0 relative">
         <div 
           ref={mapContainer} 
           className="w-full h-[600px] rounded-b-lg"
           style={{ backgroundColor: '#f0f0f0' }}
         />
+        {(!import.meta.env.VITE_MAPTILER_API_KEY || 
+          import.meta.env.VITE_MAPTILER_API_KEY === '9cCpjscGHon3xPEFPZZ4') && (
+          <div className="absolute bottom-4 left-4 right-4 p-3 bg-yellow-100 text-yellow-800 rounded-lg text-sm">
+            注意: MapTilerのAPIキーが設定されていないか、デフォルトキーを使用しています。
+            本番環境では独自のAPIキーを設定してください。
+          </div>
+        )}
       </CardContent>
     </Card>
   );
