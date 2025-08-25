@@ -50,10 +50,10 @@ export function MapView() {
         const bounds = currentMap.getBounds();
         const mapContainer = currentMap.getContainer();
         
-        // 150px下にオフセット（地図の高さに対する比率で計算）
+        // 90px下にオフセット（地図の高さに対する比率で計算）
         const mapHeight = mapContainer.offsetHeight;
         const mapWidth = mapContainer.offsetWidth;
-        const pixelOffsetY = 150;
+        const pixelOffsetY = 90;
         const latRange = bounds.getNorth() - bounds.getSouth();
         const lngRange = bounds.getEast() - bounds.getWest();
         const latOffset = (latRange * pixelOffsetY) / mapHeight;
@@ -70,7 +70,7 @@ export function MapView() {
         const rectangles = {
           type: 'FeatureCollection',
           features: [
-            // 左の長方形
+            // 左の長方形（赤色）
             {
               type: 'Feature',
               geometry: {
@@ -83,7 +83,9 @@ export function MapView() {
                   [center.lng - rectWidth - spacing - rectWidth/2, centerY - rectHeight/2]
                 ]]
               },
-              properties: {}
+              properties: {
+                color: 'red'
+              }
             },
             // 中央の長方形
             {
@@ -98,7 +100,9 @@ export function MapView() {
                   [center.lng - rectWidth/2, centerY - rectHeight/2]
                 ]]
               },
-              properties: {}
+              properties: {
+                color: 'blue'
+              }
             },
             // 右の長方形
             {
@@ -113,7 +117,9 @@ export function MapView() {
                   [center.lng + spacing + rectWidth/2, centerY - rectHeight/2]
                 ]]
               },
-              properties: {}
+              properties: {
+                color: 'blue'
+              }
             }
           ]
         };
@@ -124,24 +130,36 @@ export function MapView() {
           data: rectangles
         });
         
-        // 半透明の長方形レイヤーを追加（青系の色）
+        // 半透明の長方形レイヤーを追加（色はプロパティに基づいて設定）
         currentMap.addLayer({
           id: 'center-rectangles-layer',
           type: 'fill',
           source: 'center-rectangles',
           paint: {
-            'fill-color': '#0066CC',
+            'fill-color': [
+              'match',
+              ['get', 'color'],
+              'red', '#CC0033',
+              'blue', '#0066CC',
+              '#0066CC' // デフォルト
+            ],
             'fill-opacity': 0.5
           }
         });
         
-        // 長方形の境界線も追加（青系の色）
+        // 長方形の境界線も追加（色はプロパティに基づいて設定）
         currentMap.addLayer({
           id: 'center-rectangles-outline',
           type: 'line',
           source: 'center-rectangles',
           paint: {
-            'line-color': '#0044AA',
+            'line-color': [
+              'match',
+              ['get', 'color'],
+              'red', '#990022',
+              'blue', '#0044AA',
+              '#0044AA' // デフォルト
+            ],
             'line-width': 2,
             'line-opacity': 0.8
           }
