@@ -45,6 +45,60 @@ export function MapView() {
       currentMap.on('load', () => {
         console.log('Map loaded successfully with MapTiler style');
         
+        // 中央やや下に半透明の長方形を追加
+        const center = currentMap.getCenter();
+        const bounds = currentMap.getBounds();
+        
+        // 地図の高さの10%下にオフセット
+        const latOffset = (bounds.getNorth() - bounds.getSouth()) * 0.1;
+        const rectCenter: [number, number] = [center.lng, center.lat - latOffset];
+        
+        // 長方形のサイズ（度単位で概算）
+        const width = 0.0003;  // 約30px相当
+        const height = 0.0002; // 約20px相当
+        
+        // GeoJSON形式で長方形を定義
+        currentMap.addSource('center-rectangle', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [[
+                [rectCenter[0] - width/2, rectCenter[1] - height/2],
+                [rectCenter[0] + width/2, rectCenter[1] - height/2],
+                [rectCenter[0] + width/2, rectCenter[1] + height/2],
+                [rectCenter[0] - width/2, rectCenter[1] + height/2],
+                [rectCenter[0] - width/2, rectCenter[1] - height/2]
+              ]]
+            },
+            properties: {}
+          }
+        });
+        
+        // 半透明の長方形レイヤーを追加
+        currentMap.addLayer({
+          id: 'center-rectangle-layer',
+          type: 'fill',
+          source: 'center-rectangle',
+          paint: {
+            'fill-color': '#FF0000',
+            'fill-opacity': 0.5
+          }
+        });
+        
+        // 長方形の境界線も追加
+        currentMap.addLayer({
+          id: 'center-rectangle-outline',
+          type: 'line',
+          source: 'center-rectangle',
+          paint: {
+            'line-color': '#FF0000',
+            'line-width': 2,
+            'line-opacity': 0.8
+          }
+        });
+        
         // 3D建物レイヤーを追加（エラーが出ない範囲で）
         try {
           if (!currentMap.getSource('composite')) {
