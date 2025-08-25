@@ -49,13 +49,16 @@ export function MapView() {
         const center = currentMap.getCenter();
         const bounds = currentMap.getBounds();
         
-        // 地図の高さの10%下にオフセット
-        const latOffset = (bounds.getNorth() - bounds.getSouth()) * 0.1;
+        // 30px下にオフセット（地図の高さに対する比率で計算）
+        const mapHeight = currentMap.getContainer().offsetHeight;
+        const pixelOffset = 30;
+        const latRange = bounds.getNorth() - bounds.getSouth();
+        const latOffset = (latRange * pixelOffset) / mapHeight;
         const rectCenter: [number, number] = [center.lng, center.lat - latOffset];
         
-        // 長方形のサイズ（度単位で概算）
-        const width = 0.0003;  // 約30px相当
-        const height = 0.0002; // 約20px相当
+        // 長方形のサイズ（度単位で概算）- 20x10px
+        const width = 0.0002;  // 約20px相当
+        const height = 0.0001; // 約10px相当
         
         // GeoJSON形式で長方形を定義
         currentMap.addSource('center-rectangle', {
@@ -76,24 +79,24 @@ export function MapView() {
           }
         });
         
-        // 半透明の長方形レイヤーを追加
+        // 半透明の長方形レイヤーを追加（青系の色）
         currentMap.addLayer({
           id: 'center-rectangle-layer',
           type: 'fill',
           source: 'center-rectangle',
           paint: {
-            'fill-color': '#FF0000',
+            'fill-color': '#0066CC',
             'fill-opacity': 0.5
           }
         });
         
-        // 長方形の境界線も追加
+        // 長方形の境界線も追加（青系の色）
         currentMap.addLayer({
           id: 'center-rectangle-outline',
           type: 'line',
           source: 'center-rectangle',
           paint: {
-            'line-color': '#FF0000',
+            'line-color': '#0044AA',
             'line-width': 2,
             'line-opacity': 0.8
           }
