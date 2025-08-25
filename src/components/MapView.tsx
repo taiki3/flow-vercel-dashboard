@@ -18,12 +18,12 @@ export function MapView() {
     const apiKey = import.meta.env.VITE_MAPTILER_API_KEY || '9cCpjscGHon3xPEFPZZ4';
 
     try {
-      // MapTilerのスタイルを使用
+      // MapTilerの衛星写真スタイルを使用
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: `https://api.maptiler.com/maps/jp-mierune-streets/style.json?key=${apiKey}`,
+        style: `https://api.maptiler.com/maps/hybrid/style.json?key=${apiKey}`,
         center: [140.38660526412602, 35.76508886395624], // 成田空港第一ターミナル
-        zoom: 15,
+        zoom: 16,
         pitch: 0,
         bearing: 0,
         antialias: true
