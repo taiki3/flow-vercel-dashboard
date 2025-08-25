@@ -12,7 +12,16 @@ export function MapView() {
     if (map.current) return;
 
     // mapContainer.currentが存在しない場合も処理を中断
-    if (!mapContainer.current) return;
+    if (!mapContainer.current) {
+      console.error('Map container is not available');
+      return;
+    }
+
+    console.log('Initializing map with container:', mapContainer.current);
+    console.log('Container dimensions:', {
+      width: mapContainer.current.offsetWidth,
+      height: mapContainer.current.offsetHeight
+    });
 
     try {
       // OpenStreetMapのタイルを直接使用する設定
@@ -53,6 +62,33 @@ export function MapView() {
       // 地図のロードイベント
       currentMap.on('load', () => {
         console.log('Map loaded successfully with OpenStreetMap tiles');
+        console.log('Map center:', currentMap.getCenter());
+        console.log('Map zoom:', currentMap.getZoom());
+        console.log('Map bounds:', currentMap.getBounds());
+        
+        // キャンバス要素の確認
+        const canvas = mapContainer.current?.querySelector('canvas');
+        if (canvas) {
+          console.log('Canvas found:', {
+            width: canvas.width,
+            height: canvas.height,
+            style: canvas.style.cssText
+          });
+        } else {
+          console.error('Canvas element not found in map container');
+        }
+      });
+
+      // タイルの読み込み状態を監視
+      currentMap.on('data', (e) => {
+        if (e.sourceDataType === 'visibility' || e.isSourceLoaded) {
+          console.log('Map data event:', e.type, e.sourceDataType);
+        }
+      });
+
+      // レンダリング完了イベント
+      currentMap.on('render', () => {
+        console.log('Map rendered');
       });
 
       // エラーハンドリング
@@ -89,11 +125,15 @@ export function MapView() {
       <CardHeader>
         <CardTitle>リアルタイム交通状況マップ</CardTitle>
       </CardHeader>
-      <CardContent className="p-0 relative">
+      <CardContent className="p-0 relative overflow-hidden">
         <div 
           ref={mapContainer} 
-          className="w-full h-[600px] rounded-b-lg"
-          style={{ backgroundColor: '#f0f0f0' }}
+          className="w-full rounded-b-lg"
+          style={{ 
+            height: '600px',
+            backgroundColor: '#f0f0f0',
+            position: 'relative'
+          }}
         />
       </CardContent>
     </Card>
