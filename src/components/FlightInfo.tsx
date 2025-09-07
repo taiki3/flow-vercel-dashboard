@@ -160,8 +160,10 @@ export function FlightInfo() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-semibold flex items-center gap-2">
-              <span>{onTimePerformance}</span>
-              <span className="text-sm font-normal text-muted-foreground">%</span>
+              <span className="inline-flex items-baseline gap-1">
+                <span>{onTimePerformance}</span>
+                <span className="text-sm font-normal text-muted-foreground">%</span>
+              </span>
               <TrendingUp className="h-4 w-4 text-green-600" />
             </div>
           </CardContent>
@@ -172,8 +174,10 @@ export function FlightInfo() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-semibold flex items-center gap-2">
-              <span>{averageDelay}</span>
-              <span className="text-sm font-normal text-muted-foreground">分</span>
+              <span className="inline-flex items-baseline gap-1">
+                <span>{averageDelay}</span>
+                <span className="text-sm font-normal text-muted-foreground">分</span>
+              </span>
               <TrendingDown className="h-4 w-4 text-blue-600" />
             </div>
           </CardContent>
