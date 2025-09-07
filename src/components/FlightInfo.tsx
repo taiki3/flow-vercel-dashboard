@@ -131,42 +131,50 @@ export function FlightInfo() {
       </div>
 
       {/* KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription>到着便</CardDescription>
-            <CardTitle className="flex items-baseline gap-2">
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold">
               {totalArrivals}
-              <span className="text-sm font-normal text-muted-foreground">本</span>
-            </CardTitle>
-          </CardHeader>
+              <span className="text-sm font-normal text-muted-foreground ml-1">本</span>
+            </div>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription>出発便</CardDescription>
-            <CardTitle className="flex items-baseline gap-2">
-              {totalDepartures}
-              <span className="text-sm font-normal text-muted-foreground">本</span>
-            </CardTitle>
           </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold">
+              {totalDepartures}
+              <span className="text-sm font-normal text-muted-foreground ml-1">本</span>
+            </div>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription>定時運行率</CardDescription>
-            <CardTitle className="flex items-center gap-2">
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold flex items-center gap-2">
               {onTimePerformance}%
               <TrendingUp className="h-4 w-4 text-green-600" />
-            </CardTitle>
-          </CardHeader>
+            </div>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription>平均遅延</CardDescription>
-            <CardTitle className="flex items-center gap-2">
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-semibold flex items-center gap-2">
               {averageDelay} 分
               <TrendingDown className="h-4 w-4 text-blue-600" />
-            </CardTitle>
-          </CardHeader>
+            </div>
+          </CardContent>
         </Card>
       </div>
 
