@@ -24,10 +24,9 @@ export function TrafficNavigation() {
           </div>
           
           <div className="hidden md:flex items-center space-x-6">
-            <a href="#" className="text-foreground hover:text-primary transition-colors">ダッシュボード</a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">ライブ映像</a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">レポート</a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">アラート</a>
+            <a href="#/" className="text-foreground hover:text-primary transition-colors">ダッシュボード</a>
+            <a href="#/flights" className="text-muted-foreground hover:text-primary transition-colors">フライト情報</a>
+            <a href="#/alerts" className="text-muted-foreground hover:text-primary transition-colors">アラート</a>
           </div>
         </div>
 
