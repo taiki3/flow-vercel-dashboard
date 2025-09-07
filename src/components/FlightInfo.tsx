@@ -61,19 +61,19 @@ function StatusBadge({ status }: { status: string }) {
   return <Badge variant={cfg.variant}>{status}</Badge>;
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center text-sm text-muted-foreground">
-      <span className="w-16 shrink-0">{label}</span>
-      <span className="text-foreground">{value}</span>
+    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+      <span className="shrink-0 text-xs">{label}</span>
+      <span className="text-foreground font-medium">{value}</span>
     </div>
   );
 }
 
 function ArrivalItem({ f }: { f: FlightArrival }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b last:border-b-0">
-      <div className="flex items-center gap-3 min-w-0">
+    <div className="grid grid-cols-12 items-center gap-4 py-3 border-b last:border-b-0">
+      <div className="col-span-12 md:col-span-5 flex items-center gap-3 min-w-0">
         <Plane className="h-4 w-4 text-blue-600" />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -83,11 +83,13 @@ function ArrivalItem({ f }: { f: FlightArrival }) {
           <div className="text-xs text-muted-foreground truncate">{f.airline}・{f.from}</div>
         </div>
       </div>
-      <div className="hidden md:flex items-center gap-6">
-        <InfoRow label="予定" value={f.scheduledTime} />
-        <InfoRow label="実績" value={f.actualTime} />
-        <InfoRow label="ゲート" value={f.gate} />
-        <div className="flex items-center text-sm text-muted-foreground"><Users className="h-4 w-4 mr-1" />{f.passengers}</div>
+      <div className="col-span-12 md:col-span-7 grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1">
+        <InfoCell label="予定" value={f.scheduledTime} />
+        <InfoCell label="実績" value={f.actualTime} />
+        <InfoCell label="ゲート" value={f.gate} />
+        <div className="flex items-center text-sm text-muted-foreground">
+          <Users className="h-4 w-4 mr-1" />{f.passengers}
+        </div>
       </div>
     </div>
   );
@@ -95,8 +97,8 @@ function ArrivalItem({ f }: { f: FlightArrival }) {
 
 function DepartureItem({ f }: { f: FlightDeparture }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b last:border-b-0">
-      <div className="flex items-center gap-3 min-w-0">
+    <div className="grid grid-cols-12 items-center gap-4 py-3 border-b last:border-b-0">
+      <div className="col-span-12 md:col-span-5 flex items-center gap-3 min-w-0">
         <Plane className="h-4 w-4 text-purple-600" />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -106,11 +108,13 @@ function DepartureItem({ f }: { f: FlightDeparture }) {
           <div className="text-xs text-muted-foreground truncate">{f.airline}・{f.to}</div>
         </div>
       </div>
-      <div className="hidden md:flex items-center gap-6">
-        <InfoRow label="予定" value={f.scheduledTime} />
-        <InfoRow label="実績" value={f.actualTime} />
-        <InfoRow label="ゲート" value={f.gate} />
-        <div className="flex items-center text-sm text-muted-foreground"><Users className="h-4 w-4 mr-1" />{f.passengers}</div>
+      <div className="col-span-12 md:col-span-7 grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1">
+        <InfoCell label="予定" value={f.scheduledTime} />
+        <InfoCell label="実績" value={f.actualTime} />
+        <InfoCell label="ゲート" value={f.gate} />
+        <div className="flex items-center text-sm text-muted-foreground">
+          <Users className="h-4 w-4 mr-1" />{f.passengers}
+        </div>
       </div>
     </div>
   );
@@ -176,7 +180,7 @@ export function FlightInfo() {
             <CardDescription>直近の到着状況</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[360px] pr-4">
+            <ScrollArea className="h-[480px]">
               <div className="divide-y">
                 {flights.arrivals.map((f) => (
                   <ArrivalItem key={f.id} f={f} />
@@ -195,7 +199,7 @@ export function FlightInfo() {
             <CardDescription>直近の出発状況</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[360px] pr-4">
+            <ScrollArea className="h-[480px]">
               <div className="divide-y">
                 {flights.departures.map((f) => (
                   <DepartureItem key={f.id} f={f} />
@@ -208,4 +212,3 @@ export function FlightInfo() {
     </div>
   );
 }
-

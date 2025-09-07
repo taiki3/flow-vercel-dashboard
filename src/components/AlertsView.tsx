@@ -67,44 +67,53 @@ export function AlertsView() {
       </div>
 
       {/* KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
-          <CardHeader>
-            <CardDescription>発生中</CardDescription>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" /> {activeCount}
-            </CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">発生中</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeCount}</div>
+            <p className="text-xs text-muted-foreground">件</p>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardDescription>解決済み (直近)</CardDescription>
-            <CardTitle>{resolvedCount}</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">解決済み (直近)</CardTitle>
           </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{resolvedCount}</div>
+            <p className="text-xs text-muted-foreground">件</p>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardDescription>通知設定</CardDescription>
-            <CardTitle className="text-base">メール/システム通知</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">通知設定</CardTitle>
           </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">メール/システム通知</p>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardDescription>監視指標</CardDescription>
-            <CardTitle className="text-base">交通量/混雑/駐車</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">監視指標</CardTitle>
           </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">交通量/混雑/駐車</p>
+          </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Active Alerts */}
-        <Card className="lg:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> 発生中のアラート</CardTitle>
             <CardDescription>最新のイベント一覧</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[420px] pr-4">
+            <ScrollArea className="h-[500px]">
               <div className="divide-y">
                 {alerts.map((a) => (
                   <div key={a.id} className="flex items-start justify-between py-3">
@@ -193,4 +202,3 @@ function AlertSettings() {
     </Card>
   );
 }
-
